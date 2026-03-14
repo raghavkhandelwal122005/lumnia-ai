@@ -13,9 +13,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <div>
                         {activePatient ? (
                             <div className="flex items-center gap-2">
-                                <span className="text-xs font-extrabold text-[#25418F] bg-blue-50 px-3 py-1.5 rounded-full uppercase tracking-widest border border-blue-100">
-                                    Current Patient: {activePatient.name} (Age {activePatient.age})
+                                <span className="text-xs font-extrabold text-[#25418F] bg-blue-50 px-3 py-1.5 rounded-l-full uppercase tracking-widest border border-blue-100 border-r-0">
+                                    Current Patient
                                 </span>
+                                <select 
+                                    className="bg-blue-50 border border-blue-100 text-[#25418F] font-bold text-sm py-1 pl-2 pr-6 rounded-r-full focus:outline-none appearance-none cursor-pointer"
+                                    value={activePatient.id}
+                                    onChange={(e) => useDoctorStore.getState().setActivePatient(e.target.value)}
+                                >
+                                    {useDoctorStore.getState().patients.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name} (Age {p.age})</option>
+                                    ))}
+                                </select>
                             </div>
                         ) : (
                             <div className="text-sm font-bold text-slate-400">Welcome, Doctor</div>

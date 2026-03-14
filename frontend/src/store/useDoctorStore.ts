@@ -23,6 +23,7 @@ interface DoctorState {
     activePatientId: string | null;
     setActivePatient: (id: string) => void;
     getActivePatient: () => Patient | null;
+    addPatient: (patient: Patient) => void;
 }
 
 const initialPatients: Patient[] = [
@@ -104,5 +105,10 @@ export const useDoctorStore = create<DoctorState>((set, get) => ({
     getActivePatient: () => {
         const { patients, activePatientId } = get();
         return patients.find(p => p.id === activePatientId) || null;
+    },
+    addPatient: (patient: Patient) => {
+        set((state) => ({
+            patients: [patient, ...state.patients]
+        }));
     }
 }));

@@ -2,7 +2,7 @@
 import DashboardLayout from '../../components/DashboardLayout';
 import { useDoctorStore } from '../../store/useDoctorStore';
 import { useRouter } from 'next/navigation';
-import { Search, Users, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Search, Users, Activity, AlertTriangle, CheckCircle, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
 export default function DoctorDashboard() {
@@ -12,9 +12,37 @@ export default function DoctorDashboard() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('All');
 
+    // Add Patient State
+    const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [newAge, setNewAge] = useState('');
+    const [newStatus, setNewStatus] = useState<'Stable' | 'Critical' | 'Under Observation'>('Stable');
+
     const handlePatientClick = (id: string) => {
         setActivePatient(id);
         router.push('/dashboard');
+    };
+
+    const handleAddPatient = (e: React.FormEvent) => {
+        e.preventDefault();
+        const newPatient = {
+            id: 'p' + Date.now().toString().slice(-4),
+            name: newName,
+            age: parseInt(newAge) || 0,
+            lastVisit: new Date().toISOString(),
+            status: newStatus,
+            mockData: {
+                vitals: { bloodOxygen: '', restingHeartRate: '', sleepHours: '', activityScore: '', bloodPressureSys: '', bloodPressureDia: '', healthRiskScore: '' },
+                logs: [],
+                reports: [],
+                chatSessions: []
+            }
+        };
+        useDoctorStore.getState().addPatient(newPatient);
+        setIsAddPatientOpen(false);
+        setNewName('');
+        setNewAge('');
+        setNewStatus('Stable');
     };
 
     const getStatusIcon = (status: string) => {
@@ -58,6 +86,12 @@ export default function DoctorDashboard() {
                         <h2 className="text-2xl font-black text-slate-800">Doctor Dashboard</h2>
                         <p className="text-slate-500 font-medium mt-1">Manage your patients and monitor their health status.</p>
                     </div>
+                    <button 
+                        onClick={() => setIsAddPatientOpen(true)}
+                        className="bg-[#25418F] text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:bg-blue-800 transition whitespace-nowrap"
+                    >
+                        <Plus size={18} /> Add New Patient
+                    </button>
                 </div>
 
                 {/* Stats Cards */}
@@ -182,6 +216,63 @@ export default function DoctorDashboard() {
                 </div>
 
             </div>
+
+            {/* Add Patient Modal */}
+            {isAddPatientOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+                    <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h3 className="text-xl font-black text-[#1E293B] flex items-center gap-3">
+                                <Users className="text-[#25418F]" /> Add New Patient
+                            </h3>
+                            <button onClick={() => setIsAddPatientOpen(false)} className="text-slate-400 hover:text-slate-700 transition p-2 bg-white rounded-full shadow-sm">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddPatient} className="p-8 space-y-6">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Patient Full Name</label>
+                                <input 
+                                    type="text" 
+                                    required 
+                                    value={newName} 
+                                    onChange={(e) => setNewName(e.target.value)} 
+                                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-[#25418F] focus:outline-none focus:ring-1 focus:ring-[#25418F]" 
+                                    placeholder="Jane Doe" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Age</label>
+                                <input 
+                                    type="number" 
+                                    required 
+                                    min="0"
+                                    max="120"
+                                    value={newAge} 
+                                    onChange={(e) => setNewAge(e.target.value)} 
+                                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-[#25418F] focus:outline-none focus:ring-1 focus:ring-[#25418F]" 
+                                    placeholder="35" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Initial Status</label>
+                                <select 
+                                    value={newStatus}
+                                    onChange={(e) => setNewStatus(e.target.value as any)}
+                                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-[#25418F] focus:outline-none focus:ring-1 focus:ring-[#25418F] bg-white text-slate-700"
+                                >
+                                    <option value="Stable">Stable</option>
+                                    <option value="Under Observation">Under Observation</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                            <button type="submit" className="w-full bg-[#25418F] text-white py-4 rounded-xl font-bold shadow-md hover:bg-blue-800 transition">
+                                Create Patient Record
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </DashboardLayout>
     );
 }
