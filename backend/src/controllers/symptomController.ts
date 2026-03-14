@@ -49,7 +49,7 @@ export const analyzeSymptoms = async (req: AuthRequest, res: Response) => {
         let aiAnalysis;
         try {
             const result = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
+                model: 'gemini-2.5-flash',
                 contents: prompt,
             });
             const responseText = result.text ?? '';

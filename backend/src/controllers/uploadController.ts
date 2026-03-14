@@ -47,7 +47,7 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
             if (!apiKey) throw new Error("GEMINIAI_API_KEY is missing from environment.");
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
             const imageBuffer = fs.readFileSync(filePath);
             const base64Image = imageBuffer.toString('base64');
