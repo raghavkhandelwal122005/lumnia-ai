@@ -8,9 +8,16 @@ import chatRoutes from './routes/chat';
 import reportRoutes from './routes/reports';
 import uploadRoutes from './routes/upload';
 import suggestionRoutes from './routes/suggestions';
+import dns from 'dns';
 import path from 'path';
 
 dotenv.config();
+
+// Force Node.js to prefer IPv4 over IPv6. 
+// This fixes "ENETUNREACH" errors on Render when connecting to Supabase/AWS.
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 const app = express();
 

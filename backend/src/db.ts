@@ -41,7 +41,10 @@ class MockPool {
 }
 
 export const pool = process.env.DATABASE_URL ? new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 }) : new MockPool() as unknown as Pool;
 
 export const initDb = async () => {
