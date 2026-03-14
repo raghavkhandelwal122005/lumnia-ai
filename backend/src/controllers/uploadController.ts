@@ -3,7 +3,7 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import { AuthRequest } from '../utils/auth';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -38,13 +38,16 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
         }
 
         const filePath = req.file.path;
-        let aiAnalysis = {
-            finding: "Image uploaded successfully. AI analysis is currently unavailable.",
-            confidence: 0.5
-        };
+        console.log(`[AI Analysis] Processing file: ${req.file.filename}`);
+
+        let aiAnalysis;
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.GEMINIAI_API_KEY as string });
+            const apiKey = process.env.GEMINIAI_API_KEY;
+            if (!apiKey) throw new Error("GEMINIAI_API_KEY is missing from environment.");
+
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
             const imageBuffer = fs.readFileSync(filePath);
             const base64Image = imageBuffer.toString('base64');
@@ -61,25 +64,24 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
                 "confidence": <number between 0 and 1>
             }`;
 
-            const result = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: [
-                    prompt,
-                    {
-                        inlineData: {
-                            data: base64Image,
-                            mimeType: mimeType
-                        }
+            const result = await model.generateContent([
+                prompt,
+                {
+                    inlineData: {
+                        data: base64Image,
+                        mimeType: mimeType
                     }
-                ],
-            });
+                }
+            ]);
 
-            const responseText = result.text ?? '';
-            const cleanJsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-            aiAnalysis = JSON.parse(cleanJsonStr);
+            const response = await result.response;
+            const responseText = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+            aiAnalysis = JSON.parse(responseText);
+            console.log("[AI Analysis] Success:", aiAnalysis.finding);
+
         } catch (geminiErr: any) {
-            console.error("Gemini AI API Error in image assessment fallback logic:", geminiErr.message);
-            // Default fallback if Gemini fails
+            console.error("[AI Analysis] API Error Detail:", geminiErr.message);
+            // Default medical fallback if Gemini fails
             aiAnalysis = {
                 finding: "I've received your image, but my visual analysis engine is currently unavailable. No obvious emergencies were detected in the upload metadata.",
                 confidence: 0.1
@@ -87,7 +89,7 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({
-            message: "Image uploaded successfully",
+            message: "Image process complete",
             filename: req.file.filename,
             url: `/uploads/${req.file.filename}`,
             analysis: aiAnalysis
